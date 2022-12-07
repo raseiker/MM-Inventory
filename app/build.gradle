@@ -6,12 +6,12 @@ plugins {
 
 android {
     namespace 'com.example.mm_inventory'
-    compileSdk 32
+    compileSdk 32 //was 32
 
     defaultConfig {
         applicationId "com.example.mm_inventory"
         minSdk 24
-        targetSdk 32
+        targetSdk 32//was 32
         versionCode 1
         versionName "1.0"
 

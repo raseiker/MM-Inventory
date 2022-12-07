@@ -33,6 +33,11 @@ class ProductViewModel : ViewModel() {
         private set
     var filterText = mutableStateOf("")
         private set
+    var isFilterSelected = mutableStateOf(false)
+        private set
+    var stockSelected = mutableStateOf("0")
+        private set
+    val stockList = listOf("50","100","200")
 
     private val productsTest = mutableStateOf<Response<List<ProductState>>>(Response.Loading)
 
@@ -49,7 +54,12 @@ class ProductViewModel : ViewModel() {
             "supplier" -> _product.update { it.copy(supplier = value) }
             "category" -> _product.update { it.copy(category = value) }
             "operator" -> existenceOperator.value = value
-            "filter" -> filterText.value = value.lowercase().trim()
+            "filter" -> filterText.value = value.lowercase()//.trim()
+            "filterStock" -> {
+                stockSelected.value = value.also { isFilterSelected.value = !isFilterSelected.value }
+                if (isFilterSelected.value) getProductsByStock(stock = value.toInt())
+                else getAllProductTest()
+            }
             "stock" -> _product.update { it.copy(stock = value.filter { it.isDigit() }) }
             "purchase" -> _product.update { it.copy(purchaseBuy = value) }
             "sale" -> _product.update { it.copy(saleBuy = value) }
@@ -204,21 +214,18 @@ class ProductViewModel : ViewModel() {
     }
 
     fun getProductByName(name: String) = viewModelScope.launch {
-        isLoading.value = true
-        when (val res = repo.getProductByName(name = name)) {
-            is Response.Error ->  Log.w("getProName", "Error... ${res.e}")
-            Response.Loading -> Unit
-            is Response.Success -> {
-                Log.d("getProName", "document is... ${res.data.stock}")
-                _products.update { it - it + res.data }
-            }
-        }
-//        val oldList = _products.value
-//        val searchedList = oldList.filter { it.name == name }
-//        _products.update { searchedList.ifEmpty { it } }
+        val searchedList = _products.value.filter { searchText(text = it.name, textFilter = name) }
+        _products.update { searchedList.ifEmpty { it } }
     }
 
+    private fun getProductsByStock(stock: Int) = viewModelScope.launch {
+        val searchedList = _products.value.filter { it.stock.toInt() <= stock }
+        if (searchedList.isNotEmpty()) _products.update { searchedList }
 
+    }
 
-
+    private fun searchText(text: String, textFilter: String): Boolean{
+        val list = text.split(" ")
+        return list.find { it.startsWith(textFilter) } != null
+    }
 }

@@ -108,10 +108,30 @@ class ProductRepo {
         }
     }
 
-    suspend fun getProductByName(name: String): Response<ProductState> {
+//    suspend fun getProductByName(name: String): Response<ProductState> {
+//        return try {
+//            val response = db.collection(PRODUCT_COLLECTION).whereEqualTo("name", name)
+//                .get().await().map { it.toObject(ProductState::class.java)}.first()
+//            Response.Success(data = response)
+//        } catch (e: Exception) {
+//            Response.Error(e = e.toString())
+//        }
+//    }
+
+    suspend fun getProductByName(name: String): Response<List<ProductState>> {
         return try {
-            val response = db.collection(PRODUCT_COLLECTION).whereEqualTo("name", name)
-                .get().await().map { it.toObject(ProductState::class.java)}.first()
+            val response = db.collection(PRODUCT_COLLECTION).whereGreaterThanOrEqualTo("name", name)
+                .get().await().map { it.toObject(ProductState::class.java) }
+            Response.Success(data = response)
+        } catch (e: Exception) {
+            Response.Error(e = e.toString())
+        }
+    }
+
+    suspend fun getProductsByStock(stock: Int): Response<List<ProductState>> {
+        return try {
+            val response = db.collection(PRODUCT_COLLECTION).whereLessThanOrEqualTo("stock", stock)
+                .get().await().map { it.toObject(ProductState::class.java) }
             Response.Success(data = response)
         } catch (e: Exception) {
             Response.Error(e = e.toString())

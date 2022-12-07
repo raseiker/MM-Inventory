@@ -6,7 +6,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
@@ -18,10 +20,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.vector.DefaultTintColor
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
@@ -110,7 +115,8 @@ fun MyTextFieldForm(
     onClearText: () -> Unit = {},
     onSendClicked: () -> Unit = {},
     onSearchClicked: () -> Unit = {},
-    isReadOnly: Boolean = false
+    isReadOnly: Boolean = false,
+    isSearchBar: Boolean = false
 ) {
     //var text by remember { mutableStateOf("") }
     val isPassword = (keyboardType == KeyboardType.NumberPassword)
@@ -138,23 +144,26 @@ fun MyTextFieldForm(
                 IconButton(
                     onClick = { if (isPassword) isVisibility = !isVisibility else onClearText() }
                 ) {
-                    Icon(
-                        painter =
-                        if (isPassword) {
-                            if (isVisibility) painterResource(id = R.drawable.ic_baseline_visibility_off_24)//on
-                            else painterResource(id = R.drawable.ic_baseline_visibility_24)//off
-                        } else {
-                            painterResource(id = R.drawable.ic_baseline_close_24)
-                        },
-                        contentDescription = null
-                    )
+                    if (text != ""){
+                        Icon(
+                            painter =
+                            if (isPassword) {
+                                if (isVisibility) painterResource(id = R.drawable.ic_baseline_visibility_off_24)//on
+                                else painterResource(id = R.drawable.ic_baseline_visibility_24)//off
+                            } else {
+                                painterResource(id = R.drawable.ic_baseline_close_24)
+                            },
+                            contentDescription = null
+                        )
+                    }
                 }
             },
             singleLine = true,
             colors = TextFieldDefaults.outlinedTextFieldColors(
-                focusedBorderColor = MaterialTheme.colors.secondaryVariant.copy(alpha = ContentAlpha.high),
+                focusedBorderColor = if(!isSearchBar) MaterialTheme.colors.secondaryVariant.copy(alpha = ContentAlpha.high) else Color.Transparent,
                 cursorColor = MaterialTheme.colors.secondary,
-                focusedLabelColor = MaterialTheme.colors.secondary
+                focusedLabelColor = MaterialTheme.colors.secondary,
+                unfocusedBorderColor = if(isSearchBar) Color.Transparent else Color.Gray
             ),
             shape = MaterialTheme.shapes.medium.copy(all = CornerSize(0.dp)),
             readOnly = isReadOnly,
@@ -196,23 +205,27 @@ fun MyButton(
 @Composable
 fun MyTopApBar(
     title: String? = null,
-    navIcon: ImageVector? = ImageVector.vectorResource(id = R.drawable.ic_baseline_arrow_back_24),
+    navIcon: ImageVector? = null,
     actionIconBookMark: ImageVector? = null,
     actionIcon: ImageVector? = null,
     onActionIcon: () -> Unit = {},
     isFavorite: Boolean = false,
+    searchField: @Composable () -> Unit,
     modifier: Modifier = Modifier
 ) {
     var isFav by remember {//change color
         mutableStateOf(isFavorite)
     }
     TopAppBar(
-        title = { title?.let { Text(text = it) } },
+        title = { if (title != null) Text(text = title) else searchField()  },
         navigationIcon = {
-            IconButton(onClick = {}) {
-                navIcon?.let { Icon(
-                    imageVector = it,
-                    contentDescription = "go back") }
+            navIcon?.let {
+                IconButton(onClick = {}) {
+                    Icon(
+                        imageVector = it,
+                        contentDescription = "go back"
+                    )
+                }
             }
         },
         actions = {
@@ -239,7 +252,7 @@ fun MyTopApBar(
         },
         backgroundColor = MaterialTheme.colors.primary,
         contentColor = MaterialTheme.colors.onPrimary,
-        modifier = modifier
+        modifier = modifier.heightIn(min = 70.dp)
     )
 }
 
@@ -275,6 +288,7 @@ fun MyNormalCard(
             elevation = 5.dp,
             shape = MaterialTheme.shapes.small.copy(all = CornerSize(0.dp)),
             border = BorderStroke(width = 1.dp, color = if (stock < 50) MaterialTheme.colors.error else Color.Unspecified),
+//            modifier = Modifier.shadow(elevation = 5.dp, spotColor = if (stock < 50) MaterialTheme.colors.error else Color.Unspecified)
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -428,5 +442,26 @@ fun MyProgressBar() {
         modifier = Modifier.fillMaxSize()
     ) {
         CircularProgressIndicator(color = MaterialTheme.colors.secondaryVariant)
+    }
+}
+
+@Composable
+fun MyChips(
+    stock: String,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false,
+    onSelectedChange: (Boolean) -> Unit
+){
+    Surface(
+        color = if(isSelected) MaterialTheme.colors.secondaryVariant else MaterialTheme.colors.primary,
+        contentColor = if(isSelected) MaterialTheme.colors.onSecondary else MaterialTheme.colors.onPrimary,
+        shape = CircleShape,
+        elevation = 5.dp,
+        modifier = modifier
+    ) {
+        Row(modifier = Modifier.toggleable(value = isSelected, onValueChange = { onSelectedChange(it) })
+        ) {
+            MyText(text = "Menor que $stock", modifier = Modifier.padding(all = 10.dp))
+        }
     }
 }

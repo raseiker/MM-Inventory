@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.example.mm_inventory.R
 import com.example.mm_inventory.model.data.product.ProductState
 import com.example.mm_inventory.model.data.response.Response
+import com.example.mm_inventory.ui.presentation.utils.MyChips
 import com.example.mm_inventory.ui.presentation.utils.MyNormalCard
 import com.example.mm_inventory.ui.presentation.utils.MyProgressBar
 import com.example.mm_inventory.ui.presentation.utils.MyTextFieldForm
@@ -34,26 +35,24 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(10.dp),
         modifier = modifier
     ) {
-        Spacer(modifier = Modifier.height(30.dp))
-        MyTextFieldForm(
-            label = "Filtrar",
-            text = productViewModel.filterText.value,
-            onValueChange = { productViewModel.onValueChanged(field = "filter", value = it) },
-            onClearText = { productViewModel.onClearText(field = "filter") },
-            keyboardType = KeyboardType.Text,
-            imeAction = ImeAction.Search,
-            onSearchClicked = { productViewModel.getProductByName(name = productViewModel.filterText.value)},
-            modifier = Modifier.padding(horizontal = 20.dp)
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
+        Row() {
+            productViewModel.stockList.forEach { stock ->
+                MyChips(
+                    stock = stock,
+                    isSelected = productViewModel.stockSelected.value == stock && productViewModel.isFilterSelected.value,
+                    modifier = Modifier.padding(start = 20.dp, top = 20.dp, bottom = 10.dp),
+                    onSelectedChange = { productViewModel.onValueChanged(field = "filterStock", value = stock) }
+                )
+            }
+        }
         LazyColumn(
+            contentPadding = PaddingValues(bottom = 70.dp)
 //            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(items = listProductState) { product ->
                 MyNormalCard(
                     title = product.name,
-                    subTitle = "${product.stock} unidades",
+                    subTitle = "${product.stock} unidades · ${product.supplier} · ${product.category}",
                     stock = product.stock.toInt(),
                     icon = R.drawable.ic_baseline_local_drink_24,
                     onClick = {
